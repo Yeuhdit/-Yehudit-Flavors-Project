@@ -1,2 +1,2 @@
-# Yehudit Flavors Project
+# recipes-project
 react &amp; node
