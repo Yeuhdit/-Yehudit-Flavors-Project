@@ -1,60 +1,69 @@
-import bcrypt from 'bcrypt';       // ספרייה להצפנת סיסמאות לפני שמירה במסד
-import Joi from 'joi';             // ספרייה לבדיקה ואימות נתונים מהמשתמש (validation)
-import mongoose from 'mongoose';   // ספרייה להתחברות וניהול מסדי MongoDB
-import jwt from 'jsonwebtoken';    // ספרייה ליצירת טוקנים (JWT) לאימות משתמשים
+// node-server/models/user.model.js
+import mongoose from 'mongoose';
+import bcrypt from 'bcrypt';
+import Joi from 'joi';
+import jwt from 'jsonwebtoken';
 
-
-// 📄 הגדרת הסכימה (Schema) של המשתמש
+// סכימת משתמש
 const userSchema = new mongoose.Schema({
-    username: { type: String, required: true },
-    password: { 
-        type: String, 
-        unique: true, 
-        minlength: [8, 'password must contain at least 8'], 
-        match: /(?=.*[a-zA-Z])(?=.*\d)/, 
-        required: true 
-    },
-    email: { type: String, unique: true, required: true },
-    address: { type: String },
-    role: { 
-        type: String, 
-        default: 'user', 
-        enum: ['admin', 'user', 'registered user'], 
-        required: true 
-    }
+  username: { type: String, required: true },
+  password: { 
+    type: String, 
+    unique: true, 
+    minlength: [8, 'password must contain at least 8'], 
+    match: /(?=.*[a-zA-Z])(?=.*\d)/, 
+    required: true 
+  },
+  email: { type: String, unique: true, required: true },
+  address: { type: String },
+  role: { 
+    type: String, 
+    default: 'user', 
+    enum: ['admin', 'user', 'registered user'], 
+    required: true 
+  }
 });
 
-// 🔐 הצפנת הסיסמה לפני שמירה במסד הנתונים
-userSchema.pre('save', async function (next) {
-    try {
-        const saltRounds = parseInt(process.env.BCRYPT_SALT) || 10;
-        const hashPassword = await bcrypt.hash(this.password, saltRounds);
-        this.password = hashPassword;
-        next();
-    } catch (err) {
-        next(err);
-    }
+// הצפנת סיסמה לפני שמירה
+userSchema.pre('save', async function(next) {
+  try {
+    const saltRounds = parseInt(process.env.BCRYPT_SALT) || 10;
+    this.password = await bcrypt.hash(this.password, saltRounds);
+    next();
+  } catch (err) {
+    next(err);
+  }
 });
 
-// ✅ סכימת ולידציה עם Joi
-export const userValidator = {
-    logInSchema: Joi.object({
-        email: Joi.string().email().required(),
-        password: Joi.string().min(8).required(),
-    }),
-};
-
-// 🎟️ פונקציה ליצירת טוקן JWT
-export const generateToken = (user) => {
-    const privateKey = process.env.JWT_SECRET || 'JWT_SECRET';
-    const data = { role: user.role, user_id: user._id };
-    const token = jwt.sign(data, privateKey, { expiresIn: '1h' });
-    return token;
-};
-
-// 🧱 יצירת המודל לשימוש בקבצים אחרים
+// מודל mongoose
 export const User = mongoose.model('user', userSchema);
 export { userSchema };
+
+// Joi validation
+export const userJoi = {
+  register: Joi.object({
+    username: Joi.string().min(2).required(),
+    password: Joi.string().pattern(/^[a-zA-Z0-9]{8,30}$/).required(),
+    email: Joi.string().email().required(),
+    address: Joi.string().optional(),
+    role: Joi.string().valid('admin', 'user', 'registered user').default('user')
+  }),
+  login: Joi.object({
+    email: Joi.string().email().required(),
+    password: Joi.string().min(8).required()
+  }),
+  updatePassword: Joi.object({
+    password: Joi.string().pattern(/^[a-zA-Z0-9]{8,30}$/).required(),
+    repeatPassword: Joi.ref('password')
+  })
+};
+
+// פונקציה ליצירת JWT
+export const generateToken = (user) => {
+  const privateKey = process.env.JWT_SECRET || 'JWT_SECRET';
+  const data = { role: user.role, user_id: user._id };
+  return jwt.sign(data, privateKey, { expiresIn: '1h' });
+};
 
 
 // הדף הזה אחראי על כל מה שקשור למשתמשים:
@@ -94,6 +103,7 @@ export { userSchema };
 // הצמיד אומר “כן, אני זה המשתמש הזה”.
 
 // הבדיקה בכניסה למתקן
+
 
 // המתקן הוא המשאב באתר (כמו דף פרטי המשתמש או API שמחזיר מידע).
 
