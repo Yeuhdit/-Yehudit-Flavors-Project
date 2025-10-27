@@ -86,3 +86,5 @@ export const getAllUsers = async (req, res, next) => {
     next({ message: err.message, status: 500 });
   }
 };
+//בקיצור: זה דף שמנהל את הלוגיקה של משתמשים בצד השרת 
+// – הרשמה, התחברות וצפייה במשתמשים.
