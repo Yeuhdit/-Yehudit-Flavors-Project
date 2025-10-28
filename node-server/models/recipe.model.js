@@ -1,96 +1,50 @@
-// node-server/models/recipe.model.js
-import mongoose from "mongoose";
-import Joi from "joi"; // ולידציה
-import { userSchema } from "./user.model.js";
+// node-server/middlewares/userAuth.js
+import jwt from 'jsonwebtoken';
 
-// ✨ סכימה מקוצרת למשתמש שיוצר את המתכון
-const miniUserSchema = new mongoose.Schema({
-  name: {
-    type: String,
-    required: true,
-    get: (v) => v.toUpperCase(),
-  },
-  _id: {
-    type: mongoose.Types.ObjectId,
-    required: true,
-    ref: "users",
-  },
-});
+// Middleware לאימות משתמש רגיל
+export const userAuth = (req, res, next) => {
+    try {
+        // חילוץ הטוקן מה-Headers
+        const { authorization } = req.headers;
+        const [, token] = authorization.split(' ');
+        
+        // מפתח סודי ל-JWT
+        const privateKey = process.env.JWT_SECRET || 'JWT_SECRET';
+        
+        // אימות הטוקן וקבלת הנתונים שבו
+        const data = jwt.verify(token, privateKey);
+        req.user = data;
 
-// סכימת מתכון מלאה
-const recipeSchema = new mongoose.Schema({
-  name: { type: String, required: true },
-  description: { type: String },
-  categories: [{ type: String, required: true }],
-  preparationTime: { type: Number },
-  difficulty: { type: Number, min: 1, max: 5 },
-  dateAdded: { type: Date, default: Date.now },
-  layersArray: [
-    {
-      description: { type: String },
-      ingredients: [{ type: String }],
-    },
-  ],
-  preparationInstruction: {
-    type: [String],
-    validate: {
-      validator(v) {
-        return v && v.length >= 1;
-      },
-      message: "Preparation instructions must contain at least one step",
-    },
-  },
-  imageUrl: { type: String },
-  isPrivate: { type: Boolean, default: false },
-  user: miniUserSchema,
-});
+        // בדיקה של תפקיד המשתמש
+        if (req.user.role !== 'user' && req.user.role !== 'registered user') {
+            return next({ message: 'no permission to invoke this function', status: 403 });
+        }
 
-// מודל mongoose
-export const Recipes = mongoose.model("recipes", recipeSchema);
-
-// Joi validation
-export const recipesJoi = {
-  create: Joi.object({
-    name: Joi.string().required(),
-    description: Joi.string().optional(),
-    categories: Joi.array().items(Joi.string()).min(1).required(),
-    preparationTime: Joi.number().optional(),
-    difficulty: Joi.number().min(1).max(5).optional(),
-    layersArray: Joi.array().items(
-      Joi.object({
-        description: Joi.string().optional(),
-        ingredients: Joi.array().items(Joi.string()).optional(),
-      })
-    ).optional(),
-    preparationInstruction: Joi.array().items(Joi.string()).min(1).required(),
-    imageUrl: Joi.string().uri().optional(),
-    isPrivate: Joi.boolean().optional(),
-    user: Joi.object({
-      name: Joi.string().required(),
-      _id: Joi.string().required()
-    }).required()
-  }),
-  update: Joi.object({
-    name: Joi.string().optional(),
-    description: Joi.string().optional(),
-    categories: Joi.array().items(Joi.string()).optional(),
-    preparationTime: Joi.number().optional(),
-    difficulty: Joi.number().min(1).max(5).optional(),
-    layersArray: Joi.array().items(
-      Joi.object({
-        description: Joi.string().optional(),
-        ingredients: Joi.array().items(Joi.string()).optional(),
-      })
-    ).optional(),
-    preparationInstruction: Joi.array().items(Joi.string()).min(1).optional(),
-    imageUrl: Joi.string().uri().optional(),
-    isPrivate: Joi.boolean().optional(),
-    user: Joi.object({
-      name: Joi.string().optional(),
-      _id: Joi.string().optional()
-    }).optional()
-  })
+        // ממשיך ל-Middleware הבא או לרוטר
+        next();
+    } catch (error) {
+        console.log('error', error);
+        next({ message: error.message || error, status: 401 });
+    }
 };
 
+// Middleware לאימות גישה אך לא מחייבת
+export const getAuth = (req, res, next) => {
+    try {
+        const { authorization } = req.headers;
+        const [, token] = authorization.split(' ');
+        const privateKey = process.env.JWT_SECRET || 'JWT_SECRET';
+        const data = jwt.verify(token, privateKey);
+        req.user = data;
 
-//המודל הזה מייצג מתכון מלא – כל המידע עליו נשמר כאן:
+        if (req.user.role !== 'user' && req.user.role !== 'registered user') {
+            return next({ message: 'no permission to invoke this function', status: 403 });
+        }
+
+        next();
+    } catch (error) {
+        console.log('error', error);
+        // במקרה הזה ממשיכים גם אם אין טוקן תקין
+        next();
+    }
+};
