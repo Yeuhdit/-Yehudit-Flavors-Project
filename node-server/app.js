@@ -2,26 +2,47 @@
 import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
-import connectDB from "./config/db.js"; // החיבור ל‑MongoDB
+import path from "path";
+import connectDB from "./config/db.js";
+
+// --- Routes ---
+import userRoutes from "./routes/user.route.js";
+import recipeRoutes from "./routes/recipe.route.js";
+import categoriesRoutes from "./routes/categories.route.js";
+
+// --- Middlewares ---
+import { pageNotFound, serverErrors } from "./middlewares/handleErrors.js";
 
 dotenv.config();
 
 const app = express();
 
-// Middleware
+// --- Middleware ---
 app.use(cors());
 app.use(express.json());
 
-// חיבור ל‑MongoDB
+// --- תיקיית תמונות (אם אין images – תצרי אותה בתיקייה הראשית) ---
+app.use("/images", express.static(path.join(process.cwd(), "images")));
+
+// --- חיבור ל-MongoDB ---
 connectDB();
 
-// נתיב בדיקה
+// --- Routes ---
+app.use("/api/users", userRoutes);
+app.use("/api/recipes", recipeRoutes);
+app.use("/api/categories", categoriesRoutes);
+
+// --- Route בדיקה ---
 app.get("/", (req, res) => {
-  res.send("Server is running!!!!!");
+  res.send("✅ Server is running!!!!!");
 });
 
-// הגדרת פורט והפעלת השרת
+// --- טיפול בשגיאות ---
+app.use(pageNotFound);
+app.use(serverErrors);
+
+// --- הפעלת השרת ---
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+  console.log(`🚀 Server running on port ${PORT}`);
 });
