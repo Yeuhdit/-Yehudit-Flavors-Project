@@ -24,6 +24,16 @@ export const getAllCategories = async (req, res, next) => {
 export const getAllCategoriesAndRecipe = async (req, res, next) => {
   try {
     const categoriesAndRecipe = await Categories.find()
+    //1️⃣ .populate
+
+// פונקציה של Mongoose (ספרייה של MongoDB).
+
+// אומרת: "תמלא את השדות האלה בפרטים האמיתיים שלהם" במקום רק לשים ID.
+
+// בלי זה, השדה של המתכונים יהיה רק מספר זיהוי (_id) של המתכון.
+//.populate('recipes._id') אומר:
+
+// "תשנה כל מזהה של מתכון (_id) בתוך recipes לפרטים המלאים של אותו מתכון מהטבלה/אוסף Recipes."
       .populate('recipes._id')
       .select('-__v');
     return res.send(categoriesAndRecipe);
@@ -51,4 +61,4 @@ export const getCategoryByIdWithRec = async (req, res, next) => {
 //התפקיד  של הקובץ: controllers
 //קובץ שמכיל פונקציות לטיפול בבקשות הקשורות לקטגוריות
 //כמו קבלת כל הקטגוריות, קבלת קטגוריה לפי ID כולל מתכונים וכו'.
-
+//מנהל את כל הפעולות של "קטגוריות" בצד השרת.

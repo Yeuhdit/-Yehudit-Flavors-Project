@@ -21,6 +21,7 @@ export const Categories = mongoose.model('Categories', categoriesSchema);
 
 // Joi validation
 export const categoriesJoi = {
+ //זה החוקים שיבדקו כשמישהו יוצר קטגוריה חדשה. 
   create: Joi.object({
     description: Joi.string().required().min(2),
     recipes: Joi.array().items(
@@ -33,6 +34,7 @@ export const categoriesJoi = {
       })
     ).optional()
   }),
+  /// זה החוקים שיבדקו כשמישהו יעדכן קטגוריה קיימת.
   update: Joi.object({
     description: Joi.string().min(2).optional(),
     recipes: Joi.array().items(
@@ -46,3 +48,13 @@ export const categoriesJoi = {
     ).optional()
   })
 };
+//תפקיד: לשמור ולהגדיר איך המידע שלך נראה.
+//categories.model.js → מנהל קטגוריות ומתכונים: מגדיר איך הן
+//  נשמרות ומוודא שהמידע תקין.
+//1. categories.model.js
+
+// מקשרת ל: Recipes (מתכונים)
+
+// למה? כי קטגוריה כוללת רשימת מתכונים.
+
+// זה אומר שהדף הזה יודע על מתכונים, אבל רק החלק הקטן של כל מתכון שמופיע בתוך קטגוריה (שם, תמונה, קושי, זמן).

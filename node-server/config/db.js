@@ -1,4 +1,3 @@
-
 //תפקיד: קובץ הגדרות, כמו חיבור ל-DB או משתני סביבה.
 // node-server/config/db.js
 import mongoose from "mongoose";

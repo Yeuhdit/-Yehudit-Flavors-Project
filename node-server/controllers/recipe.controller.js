@@ -34,13 +34,11 @@ const recipeSchema = Joi.object({
 });
 
 // --- Controllers ---
-
 export const getAllRecipes = async (req, res, next) => {
   let { search = '', page = 1, perPage = 3 } = req.query;
+
 //אלה הפרמטרים (הערכים) שאתה מעביר ל־RegExp:
-
 // search → זה משתנה שמכיל את מה שהמשתמש חיפש (למשל "pizza").
-
 // 'i' → זה דגל שאומר “תתעלם מגודל האותיות” (לא משנה אם זה PIZZA או pizza).
   try {
     const query = [{ name: new RegExp(search, 'i'), isPrivate: false }];
@@ -247,3 +245,6 @@ export const deleteRecipe = async (req, res, next) => {
 // ✏️ updateRecipes – מעדכן מתכון קיים.
 
 // ❌ deleteRecipe – מוחק מתכון וגם מסיר אותו מהקטגוריות.
+
+//הדף הזה מטפל בכל הפעולות על מתכונים – יצירה, קריאה, עדכון ומחיקה.
+// הוא גם בודק שהנתונים תקינים ושומר על הרשאות המשתמש לפני פעולה במסד הנתונים.

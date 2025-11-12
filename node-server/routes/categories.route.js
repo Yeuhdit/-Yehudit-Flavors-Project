@@ -13,3 +13,4 @@ router.get('/getAllCategoriesAndRecipe', getAllCategoriesAndRecipe);
 router.get('/getCategoryByIdWithRec/:id', getCategoryByIdWithRec);
 
 export default router;
+//מה שיש שם: הנתיבים של האתר (כתובות URL).
